@@ -2,6 +2,13 @@ import csv
 
 
 class FundingRaised:
+  FILTER_FIELDS = {
+    'company_name': 1,
+    'city': 4,
+    'state': 5,
+    'round': 9
+  }
+
   @staticmethod
   def _read_csv():
     with open("../startup_funding.csv", "rt") as csvfile:
@@ -10,66 +17,37 @@ class FundingRaised:
       return [row for row in data]
 
   @staticmethod
-  def where(options={}):
+  def _filter_rows(csv_data, options):
+    for field, index in FundingRaised.FILTER_FIELDS.items():
+      if field in options:
+        csv_data = [
+          row for row in csv_data
+          if row[index] == options[field]
+        ]
+    return csv_data
+
+  @staticmethod
+  def where(options=None):
+    if options is None:
+      options = {}
+
     csv_data = FundingRaised._read_csv()
-    funding = []
+    csv_data = FundingRaised._filter_rows(csv_data, options)
 
-    if 'company_name' in options:
-      result = []
-      for row in csv_data:
-        if row[1] == options['company_name']:
-          result.append(row)
-      csv_data = result
-
-    if 'city' in options:
-      result = []
-      for row in csv_data:
-        if row[4] == options['city']:
-          result.append(row)
-      csv_data = result
-
-    if 'state' in options:
-      result = []
-      for row in csv_data:
-        if row[5] == options['state']:
-          result.append(row)
-      csv_data = result
-
-    if 'round' in options:
-      result = []
-      for row in csv_data:
-        if row[9] == options['round']:
-          result.append(row)
-      csv_data = result
-
-    output = []
-    for row in csv_data:
-      output.append(FundingRaised._row_to_dict(row))
-    return output
+    return [
+      FundingRaised._row_to_dict(row)
+      for row in csv_data
+    ]
 
   @staticmethod
   def find_by(options):
     csv_data = FundingRaised._read_csv()
 
-    if 'company_name' in options:
-      for row in csv_data:
-        if row[1] == options['company_name']:
-          return FundingRaised._row_to_dict(row)
-
-    if 'city' in options:
-      for row in csv_data:
-        if row[4] == options['city']:
-          return FundingRaised._row_to_dict(row)
-
-    if 'state' in options:
-      for row in csv_data:
-        if row[5] == options['state']:
-          return FundingRaised._row_to_dict(row)
-
-    if 'round' in options:
-      for row in csv_data:
-        if row[9] == options['round']:
-          return FundingRaised._row_to_dict(row)
+    for field, index in FundingRaised.FILTER_FIELDS.items():
+      if field in options:
+        for row in csv_data:
+          if row[index] == options[field]:
+            return FundingRaised._row_to_dict(row)
 
     raise RecordNotFound
 
@@ -91,3 +69,4 @@ class FundingRaised:
 
 class RecordNotFound(Exception):
   pass
+
